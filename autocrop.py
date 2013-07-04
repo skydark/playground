@@ -1,10 +1,14 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
+
 from collections import defaultdict
+
 import Image
 import ImageChops
 import ImageFilter
+
+from utils import makeSrcDst, imageFilter
 
 
 def getBackgroundColor(im, edge=None):
@@ -111,14 +115,17 @@ def main(source, destination, **options):
     edge = options['edge']
     del options['show'], options['edge']
 
-    im = Image.open(source)
-    im.load()
-    im = autoCrop(im, **options)
+    for source, destination in makeSrcDst(source, destination,
+                                          src_filter=imageFilter,
+                                          ignore_dst='-'):
+        im = Image.open(source)
+        im.load()
+        im = autoCrop(im, **options)
 
-    if show:
-        im.show()
-    if destination != '-':
-        im.save(destination)
+        if show:
+            im.show()
+        if destination != '-':
+            im.save(destination)
 
 
 if __name__ == '__main__':
@@ -128,9 +135,9 @@ if __name__ == '__main__':
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                         description='Auto detect white space and crop image')
     parser.add_argument('source', type=str,  # nargs='+',
-                        help='input image file')
+                        help='input image file/directory')
     parser.add_argument('destination', type=str,
-                        help='output image file')
+                        help='output image file/directory')
     parser.add_argument('--edge', type=int, default=5,
                         help='get background color from edge')
     parser.add_argument('--threshold', type=int, default=15,
