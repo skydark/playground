@@ -40,7 +40,7 @@ def clearPixels(im, width_range, height_range, c=0):
     return im
 
 
-def getbbox(im, max_error=0.01, threshold=15, suppress=5, max_edge_per=0.1):
+def getbbox(im, max_error=0.01, threshold=15, suppress=5, max_edge_per=0.1, ratio=''):
     im = im.filter(ImageFilter.GaussianBlur())
     im = im.filter(ImageFilter.FIND_EDGES)
     im = im.filter(ImageFilter.MedianFilter(3))
@@ -48,11 +48,11 @@ def getbbox(im, max_error=0.01, threshold=15, suppress=5, max_edge_per=0.1):
 
     width, height = im.size
     continue_failed = 0
-    edges = []
     left_edge = int(height * max_edge_per)
     right_edge = height - 1 - int(height * max_edge_per)
     top_edge = int(width * max_edge_per)
     bottom_edge = width - 1 - int(width * max_edge_per)
+    edges = []
     for start, end, step in (
             (0, left_edge, 1),
             (height - 1, right_edge, -1),
@@ -96,12 +96,31 @@ def getbbox(im, max_error=0.01, threshold=15, suppress=5, max_edge_per=0.1):
         edges.append(t)
         im = clearPixels(im, (start, t, step), (0, height))
     top, bottom, left, right = edges
+
+    if ratio:
+        w, h = map(int, ratio.split('x'))
+        w_cut, h_cut = right - left, bottom - top
+        if w_cut * h > w * h_cut:
+            h_dst = min(int(round(1.0 * w_cut * h / w)), height)
+            delta = h_dst - h_cut
+            cut = min(top, delta // 2)
+            top -= cut
+            bottom += min(delta - cut, height - bottom)
+        else:
+            w_dst = min(int(round(1.0 * h_cut * w / h)), width)
+            delta = w_dst - w_cut
+            cut = min(left, delta // 2)
+            left -= cut
+            right += min(delta - cut, width - right)
+
     return (left, top, right, bottom)
 
 
 def autoCrop(image, **options):
     gray = image.convert('L')
     background_color = getBackgroundColor(gray, options.get('edge', None))
+    if 'edge' in options:
+        del options['edge']
     bg = Image.new("L", gray.size, background_color)
     diff = ImageChops.difference(gray, bg)
     bbox = getbbox(diff, **options)
@@ -113,7 +132,7 @@ def autoCrop(image, **options):
 def main(source, destination, **options):
     show = options['show'] or destination == '-'
     edge = options['edge']
-    del options['show'], options['edge']
+    del options['show']
 
     for source, destination in makeSrcDst(source, destination,
                                           src_filter=imageFilter,
@@ -146,6 +165,8 @@ if __name__ == '__main__':
                         help='error suppress counter')
     parser.add_argument('--max-error', type=float, default=0.01,
                         help='error detect sensitivity')
+    parser.add_argument('--ratio', type=str, default='',
+                        help='target screen ratio, eg.: 758x1024')
     parser.add_argument('--max-edge-per', type=float, default=0.1,
                         help='max ratio for page cut')
     parser.add_argument('-s', '--show', action='store_true',
