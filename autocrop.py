@@ -40,7 +40,7 @@ def clearPixels(im, width_range, height_range, c=0):
     return im
 
 
-def getbbox(im, max_error=0.01, threshold=15, suppress=5, max_edge_per=0.1, ratio=''):
+def getbbox(im, max_error=0.01, threshold=15, suppress=30, max_edge_per=0.1, ratio=''):
     im = im.filter(ImageFilter.GaussianBlur())
     im = im.filter(ImageFilter.FIND_EDGES)
     im = im.filter(ImageFilter.MedianFilter(3))
@@ -161,7 +161,7 @@ if __name__ == '__main__':
                         help='get background color from edge')
     parser.add_argument('--threshold', type=int, default=15,
                         help='color diff threshold')
-    parser.add_argument('--suppress', type=int, default=5,
+    parser.add_argument('--suppress', type=int, default=30,
                         help='error suppress counter')
     parser.add_argument('--max-error', type=float, default=0.01,
                         help='error detect sensitivity')
