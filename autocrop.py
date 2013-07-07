@@ -4,9 +4,9 @@
 
 from collections import defaultdict
 
-import Image
-import ImageChops
-import ImageFilter
+from PIL import Image
+from PIL import ImageChops
+from PIL import ImageFilter
 
 from utils import makeSrcDst, imageFilter
 

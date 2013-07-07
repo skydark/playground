@@ -4,7 +4,7 @@
 
 from os import path
 
-import Image
+from PIL import Image
 
 from utils import makeSrcDst, imageFilter
 
